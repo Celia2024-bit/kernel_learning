@@ -1,0 +1,66 @@
+site_name: Systems Engineering Notes
+site_description: Deep dives into Linux kernel internals for low-latency systems engineering.
+site_author: Celia2024-bit
+repo_url: https://github.com/Celia2024-bit/kernel_learning
+repo_name: Celia2024-bit/kernel_learning
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: teal
+      accent: orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+    - scheme: default
+      primary: teal
+      accent: orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Low-Latency Engineering:
+      - "1. Why Context Switches Matter": Low-Latency1_Why_context_switches_matter.md
+      - "2. What Is a Context Switch": Low-Latency2_What_is_a_context_switches.md
+      - "3. What Causes a Page Fault": Low-Latency3_What-cause-a-page-fault.md
+      - "4. Practical Low-Latency Playbook": Low-Latency4_Practical-low-latency-playbook.md
+      - "5. Phased Implementation Checklist": Low-Latency5_Phased-implementation-checklist.md
+  - Systems Deep-Dive:
+      - "Bootloader and Kernel Handover": "Bootloader_and_Kernel_Handover.md"
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Celia2024-bit/kernel_learning
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/
