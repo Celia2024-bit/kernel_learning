@@ -1,0 +1,1052 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Deep dives into Linux kernel internals for low-latency systems engineering.">
+      
+      
+        <meta name="author" content="Celia2024-bit">
+      
+      
+      
+        <link rel="prev" href="../Low-Latency1_Why_context_switches_matter/">
+      
+      
+        <link rel="next" href="../Low-Latency3_What-cause-a-page-fault/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>2. What Is a Context Switch - Systems Engineering Notes</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#low-latency-engineering-2-what-exactly-happens-during-a-context-switch" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Systems Engineering Notes" class="md-header__button md-logo" aria-label="Systems Engineering Notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Systems Engineering Notes
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              2. What Is a Context Switch
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Celia2024-bit/kernel_learning" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Celia2024-bit/kernel_learning
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../Low-Latency1_Why_context_switches_matter/" class="md-tabs__link">
+          
+  
+  
+  Low-Latency Engineering
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Bootloader_and_Kernel_Handover/" class="md-tabs__link">
+          
+  
+  
+  Systems Deep-Dive
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Systems Engineering Notes" class="md-nav__button md-logo" aria-label="Systems Engineering Notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Systems Engineering Notes
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Celia2024-bit/kernel_learning" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Celia2024-bit/kernel_learning
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Low-Latency Engineering
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Low-Latency Engineering
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Low-Latency1_Why_context_switches_matter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Why Context Switches Matter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. What Is a Context Switch
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. What Is a Context Switch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#first-a-real-world-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First, a Real-World Analogy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-same-four-steps-now-in-kernel-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Same Four Steps, Now in Kernel Terms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger-1-a-blocking-system-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger 1: A Blocking System Call
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger-2-page-faults-why-minor-and-major-are-completely-different-animals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger 2: Page Faults — Why "Minor" and "Major" Are Completely Different Animals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger-3-hardware-interrupts-the-one-with-a-built-in-decision-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger 3: Hardware Interrupts — The One With a Built-In Decision Point
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-this-level-of-detail-actually-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Level of Detail Actually Matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Low-Latency3_What-cause-a-page-fault/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. What Causes a Page Fault
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Low-Latency4_Practical-low-latency-playbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Practical Low-Latency Playbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Low-Latency5_Phased-implementation-checklist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. Phased Implementation Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Systems Deep-Dive
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Systems Deep-Dive
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Bootloader_and_Kernel_Handover/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bootloader and Kernel Handover
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#first-a-real-world-analogy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First, a Real-World Analogy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-same-four-steps-now-in-kernel-terms" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Same Four Steps, Now in Kernel Terms
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger-1-a-blocking-system-call" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger 1: A Blocking System Call
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger-2-page-faults-why-minor-and-major-are-completely-different-animals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger 2: Page Faults — Why "Minor" and "Major" Are Completely Different Animals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trigger-3-hardware-interrupts-the-one-with-a-built-in-decision-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trigger 3: Hardware Interrupts — The One With a Built-In Decision Point
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-this-level-of-detail-actually-matters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why This Level of Detail Actually Matters
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="low-latency-engineering-2-what-exactly-happens-during-a-context-switch">Low-Latency Engineering 2: What Exactly Happens During a Context Switch?<a class="headerlink" href="#low-latency-engineering-2-what-exactly-happens-during-a-context-switch" title="Permanent link">&para;</a></h1>
+<p><img alt="" src="../images/2.0.png" /></p>
+<p>In the first post of this series, I covered the general picture: a <strong>mode switch</strong> happens whenever the CPU drops into kernel space (hardware interrupt, system call, fault, or trap), and it <em>may or may not</em> escalate into a full <strong>context switch</strong> — a different task taking over the CPU.</p>
+<p>That was the 30,000-foot view. This post is the zoom-in: <strong>what does the kernel actually do, step by step, when a context switch happens</strong> — and why does it cost what it costs?</p>
+<hr />
+<h2 id="first-a-real-world-analogy">First, a Real-World Analogy<a class="headerlink" href="#first-a-real-world-analogy" title="Permanent link">&para;</a></h2>
+<p>Before diving into kernel internals, I built this analogy to keep the mental model straight in my head:</p>
+<p><img alt="" src="../images/2.1.png" /></p>
+<p>Here's how to read it:</p>
+<ul>
+<li>Each <strong>Room</strong> (Room1, Room2, Room3, Room4) represents a <strong>CPU core</strong>.</li>
+<li>The <strong>computer inside each room</strong> represents the CPU's execution resources.</li>
+<li>The <strong>clock on each room</strong> represents the <strong>time slice</strong> — the fixed amount of time a task is allowed to run before it has to give up the room.</li>
+<li>Each <strong>person</strong> represents a <strong>task</strong> (a thread or process, in kernel terms).</li>
+<li>The <strong>person in the dark suit</strong> is the <strong>scheduler</strong> — the one who decides who gets to enter which room next.</li>
+<li>The <strong>line of people waiting</strong> represents tasks sitting in a queue, waiting for their turn to use a CPU.</li>
+<li>The <strong>USB drive</strong> represents the part of <code>task_struct</code> that holds everything needed to pause and later resume a task: register state, stack pointer, program counter — the CPU state I described in Part 1.</li>
+</ul>
+<p>Now watch what happens when <strong>Room1 times out</strong> (the clock runs out — the time slice expires):</p>
+<ol>
+<li><strong>Save the PC state to the USB drive</strong> — the person currently in Room1 gets their "progress" saved onto the USB so nothing is lost.</li>
+</ol>
+<p><img alt="" src="../images/2.2.png" /></p>
+<ol>
+<li><strong>Return the person to the queue</strong> — they're pulled out of the room and sent back to the back of the line, since they didn't finish.</li>
+</ol>
+<p><img alt="myArticle content" src="../images/2.3.png" /></p>
+<ol>
+<li><strong>Choose another person from the queue for Room1</strong> — the scheduler picks whoever's next in line.</li>
+</ol>
+<p><img alt="myArticle content" src="../images/2.4.png" /></p>
+<ol>
+<li><strong>Restore the PC state and resume work</strong> — the new person sits down, and the room's computer is set up exactly the way <em>that</em> person left off last time (or freshly, if it's their first turn).</li>
+</ol>
+<p><img alt="" src="../images/2.5.png" /></p>
+<p>That's it. That's a context switch, in plain terms: <strong>save the state of whoever's leaving, pick who's next, restore that new person's state, let them run.</strong></p>
+<hr />
+<h2 id="the-same-four-steps-now-in-kernel-terms">The Same Four Steps, Now in Kernel Terms<a class="headerlink" href="#the-same-four-steps-now-in-kernel-terms" title="Permanent link">&para;</a></h2>
+<p>Every context switch I looked at — no matter what triggered it — follows this same shape. In kernel terms, it's usually laid out as five steps:</p>
+<ul>
+<li><strong>Step 1</strong>: The current task is marked as no longer runnable (e.g., set to sleep state) and moved off the CPU's run queue.</li>
+<li><strong>Step 2</strong>: The kernel <strong>saves CPU info</strong> for the outgoing task — register state, stack pointer, program counter — into its <code>task_struct</code>. (This is the "USB drive" step.)</li>
+<li><strong>Step 3</strong>: The <strong>scheduler picks the next task</strong> to run from the run queue.</li>
+<li><strong>Step 4</strong>: The kernel <strong>restores CPU info</strong> for the incoming task from its <code>task_struct</code>.</li>
+<li><strong>Step 5</strong>: Execution actually resumes — control switches back to user space, running the new task.</li>
+</ul>
+<p>The one detail worth calling out in Step 4: if the incoming task belongs to a <strong>different process</strong> than the outgoing one, the kernel also has to switch <code>mm_struct</code> — the memory mapping / page tables. That's the expensive part I mentioned in Part 1: a different process means a different address space, which usually means TLB entries built up for the old task are no longer valid for the new one. If the incoming task is just another <em>thread of the same process</em>, <code>mm_struct</code> doesn't need to change at all, which is exactly why staying within threads (instead of separate processes) is cheaper.</p>
+<p>Now let's look at the three different events that can trigger this sequence — because the <em>path into</em> these five steps looks different each time.</p>
+<hr />
+<h2 id="trigger-1-a-blocking-system-call">Trigger 1: A Blocking System Call<a class="headerlink" href="#trigger-1-a-blocking-system-call" title="Permanent link">&para;</a></h2>
+<p><img alt="2.6.jpg" src="images\2.6.jpg" /></p>
+<p>This is the <code>read()</code> example from Part 1: thread <strong>C1</strong> calls <code>read()</code>, but the I/O isn't ready yet. Since C1 can't make progress, it has no choice but to give up the CPU:</p>
+<ul>
+<li><strong>Step 1</strong>: C1 is set to sleep state and moved from the run queue to the <strong>wait queue</strong> (it's not just "not running" — it's specifically waiting on an event, like data becoming available).</li>
+<li><strong>Step 2</strong>: CPU info for C1 is saved into <code>task_struct C1</code>.</li>
+<li><strong>Step 3</strong>: The scheduler pulls the next runnable task off the run queue — in this example, <strong>B3</strong>.</li>
+<li><strong>Step 4</strong>: CPU info is restored from <code>task_struct B3</code>. Notice the diagram flags this as <strong>"switched (different process)"</strong> — meaning B3's <code>mm_struct</code> and page tables are different from C1's, so that mapping has to be swapped in too.</li>
+<li><strong>Step 5</strong>: Control returns to user space, and thread <strong>B3</strong> starts running.</li>
+</ul>
+<p>C1 stays parked in the wait queue until whatever it was waiting for (the I/O) becomes ready — at which point it's moved back to the run queue to wait its turn again.</p>
+<hr />
+<h2 id="trigger-2-page-faults-why-minor-and-major-are-completely-different-animals">Trigger 2: Page Faults — Why "Minor" and "Major" Are Completely Different Animals<a class="headerlink" href="#trigger-2-page-faults-why-minor-and-major-are-completely-different-animals" title="Permanent link">&para;</a></h2>
+<p><img alt="usersapcke_kernenl-Simplified_content-switches_page_fault.jpg" src="../images/2.7.jpg" /></p>
+<p>This is the distinction from Part 1 that I said deserved its own explanation — and once you see the two side by side, it's obvious why they behave so differently.</p>
+<p><strong>Minor page fault (bottom half of the diagram):</strong> the data the task needs is already sitting in physical memory — it just doesn't have a page-table entry pointing to it yet (this happens constantly with things like lazy allocation or copy-on-write). So the kernel simply:</p>
+<ul>
+<li>Allocates a physical frame reference and creates the page-table entry.</li>
+<li>Returns control to the <em>same</em> thread.</li>
+</ul>
+<p>That's it — <strong>no content switch</strong>. It's a mode switch that resolves almost immediately, and the diagram labels it exactly that way: mode switch in, fix the mapping, mode switch back out, same thread continues.</p>
+<p><strong>Major page fault (top half of the diagram):</strong> the data isn't in memory at all — it has to be fetched from disk (or swap). This is exactly the same situation as the blocking <code>read()</code> above: the task genuinely cannot proceed until slow I/O finishes, so it goes through the <strong>full five-step sequence</strong> — sleep state, save CPU info, scheduler picks another task, restore CPU info for that task (potentially switching <code>mm_struct</code> if it's a different process), resume in user space.</p>
+<p>Same trigger category (a fault), completely different cost — because the deciding factor isn't "what kind of fault," it's <strong>"does the task have to wait on something slow."</strong></p>
+<hr />
+<h2 id="trigger-3-hardware-interrupts-the-one-with-a-built-in-decision-point">Trigger 3: Hardware Interrupts — The One With a Built-In Decision Point<a class="headerlink" href="#trigger-3-hardware-interrupts-the-one-with-a-built-in-decision-point" title="Permanent link">&para;</a></h2>
+<p><img alt="usersapcke_kernenl-Simplified_content-switches_hardware_interrupt_in_order.jpg" src="../images/2.8.jpg" /></p>
+<p>Hardware interrupts are the most interesting case, because they make the "always mode switch, sometimes context switch" rule from Part 1 completely explicit as an actual branch in the code:</p>
+<ul>
+<li><strong>Step 0</strong>: The interrupt arrives. The CPU saves <em>basic</em> CPU info, pauses the current thread (C1), and the <strong>ISR (Interrupt Service Routine)</strong> starts running. This part always happens — it's the mode switch, guaranteed, no matter what the interrupt turns out to be about.</li>
+<li><strong>Step 1</strong>: While the ISR is running, it checks a specific condition: <strong>has C1's time slice expired, or has a higher-priority task just become runnable?</strong> If either is true, it sets a flag — <code>TIF_NEED_RESCHED</code> — to 1 on <code>task_struct C1</code>. Then the ISR finishes and stops.</li>
+</ul>
+<p>Now the kernel checks that flag:</p>
+<ul>
+<li><strong>If <code>TIF_NEED_RESCHED == 0</code></strong>: nothing else needs to happen. Control goes straight back to thread C1 in user space, exactly where it left off. <strong>No context switch</strong> — the mode switch resolved on its own.</li>
+<li><strong>If <code>TIF_NEED_RESCHED == 1</code></strong>: now the full sequence kicks in — save full CPU info for C1 (Step 2), scheduler picks the next task, e.g. B3 (Step 3), restore CPU info for B3, switching <code>mm_struct</code> if needed (Step 4), and control resumes in user space as B3 (Step 5).</li>
+</ul>
+<p>This is the clearest illustration of the general principle: <strong>the interrupt itself only guarantees a mode switch.</strong> Whether it escalates into a context switch is decided by a flag check that happens <em>after</em> the interrupt has already been handled — completely independent of what the interrupt was actually about.</p>
+<hr />
+<h2 id="why-this-level-of-detail-actually-matters">Why This Level of Detail Actually Matters<a class="headerlink" href="#why-this-level-of-detail-actually-matters" title="Permanent link">&para;</a></h2>
+<p>Once you've seen the five steps broken down like this, the cost of a context switch stops being an abstract "it's expensive" and becomes a concrete list of things that are actually happening:</p>
+<ul>
+<li>A task gets pulled off (or pushed onto) a queue — scheduler bookkeeping.</li>
+<li>Registers, stack pointer, and program counter get saved and restored — real memory writes/reads, not free.</li>
+<li>If the incoming task is from a different process, <code>mm_struct</code> and page tables get swapped — which is exactly the kind of event that flushes out the TLB entries and cold-starts the cache I talked about in the false-sharing and NUMA posts.</li>
+</ul>
+<p>And it explains why the advice from Part 1 holds up: minor page faults and simple syscalls skip almost all of this entirely (mode switch only); blocking syscalls, major page faults, and interrupts that flip <code>TIF_NEED_RESCHED</code> pay the full price.</p>
+<p><em>This is post 2 of the series. Next up: what actually causes a page fault in the first place, and how prefaulting your memory ahead of time (<code>mlockall</code> + <code>memset</code>) avoids paying for major page faults at all during the critical path.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Celia2024-bit/kernel_learning" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

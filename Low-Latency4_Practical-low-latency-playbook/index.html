@@ -1,0 +1,1231 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Deep dives into Linux kernel internals for low-latency systems engineering.">
+      
+      
+        <meta name="author" content="Celia2024-bit">
+      
+      
+      
+        <link rel="prev" href="../Low-Latency3_What-cause-a-page-fault/">
+      
+      
+        <link rel="next" href="../Low-Latency5_Phased-implementation-checklist/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>4. Practical Low-Latency Playbook - Systems Engineering Notes</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#low-latency-engineering-4-putting-it-all-together-a-practical-playbook" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Systems Engineering Notes" class="md-header__button md-logo" aria-label="Systems Engineering Notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Systems Engineering Notes
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              4. Practical Low-Latency Playbook
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="teal" data-md-color-accent="orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Celia2024-bit/kernel_learning" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Celia2024-bit/kernel_learning
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../Low-Latency1_Why_context_switches_matter/" class="md-tabs__link">
+          
+  
+  
+  Low-Latency Engineering
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../Bootloader_and_Kernel_Handover/" class="md-tabs__link">
+          
+  
+  
+  Systems Deep-Dive
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Systems Engineering Notes" class="md-nav__button md-logo" aria-label="Systems Engineering Notes" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Systems Engineering Notes
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Celia2024-bit/kernel_learning" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Celia2024-bit/kernel_learning
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Low-Latency Engineering
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Low-Latency Engineering
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Low-Latency1_Why_context_switches_matter/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    1. Why Context Switches Matter
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Low-Latency2_What_is_a_context_switches/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2. What Is a Context Switch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Low-Latency3_What-cause-a-page-fault/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    3. What Causes a Page Fault
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Practical Low-Latency Playbook
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    4. Practical Low-Latency Playbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-giving-your-critical-task-a-cpu-all-to-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Giving Your Critical Task a CPU All to Itself
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Giving Your Critical Task a CPU All to Itself">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-cpu-affinity-you-prefer-this-room" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 CPU Affinity: "You Prefer This Room"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-cpu-isolation-this-room-is-locked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 CPU Isolation: "This Room Is Locked"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-why-affinity-isolation-alone-still-isnt-enough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Why Affinity + Isolation Alone Still Isn't Enough
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-reducing-context-switches-at-the-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Reducing Context Switches at the Source
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Reducing Context Switches at the Source">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-fewer-hardware-interrupts-starting-at-image-build-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Fewer Hardware Interrupts, Starting at Image Build Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-fewer-system-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Fewer System Calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-fewer-page-faults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Fewer Page Faults
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-rounding-out-the-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Rounding Out the Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Rounding Out the Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-huge-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Huge Pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-avoiding-false-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Avoiding False Sharing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-sched_fifo-for-the-tasks-that-dont-get-their-own-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 SCHED_FIFO for the Tasks That Don't Get Their Own Core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-one-detail-on-the-kernel-itself-preempt_none" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 One Detail on the Kernel Itself: PREEMPT_NONE
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bringing-the-whole-series-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bringing the Whole Series Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Low-Latency5_Phased-implementation-checklist/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    5. Phased Implementation Checklist
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Systems Deep-Dive
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Systems Deep-Dive
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Bootloader_and_Kernel_Handover/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bootloader and Kernel Handover
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-giving-your-critical-task-a-cpu-all-to-itself" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Giving Your Critical Task a CPU All to Itself
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Giving Your Critical Task a CPU All to Itself">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-cpu-affinity-you-prefer-this-room" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 CPU Affinity: "You Prefer This Room"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-cpu-isolation-this-room-is-locked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.2 CPU Isolation: "This Room Is Locked"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-why-affinity-isolation-alone-still-isnt-enough" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.3 Why Affinity + Isolation Alone Still Isn't Enough
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-reducing-context-switches-at-the-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Reducing Context Switches at the Source
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Reducing Context Switches at the Source">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-fewer-hardware-interrupts-starting-at-image-build-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 Fewer Hardware Interrupts, Starting at Image Build Time
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-fewer-system-calls" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Fewer System Calls
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-fewer-page-faults" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 Fewer Page Faults
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-rounding-out-the-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Rounding Out the Setup
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Rounding Out the Setup">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-huge-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Huge Pages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-avoiding-false-sharing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Avoiding False Sharing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-sched_fifo-for-the-tasks-that-dont-get-their-own-core" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 SCHED_FIFO for the Tasks That Don't Get Their Own Core
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-one-detail-on-the-kernel-itself-preempt_none" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 One Detail on the Kernel Itself: PREEMPT_NONE
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bringing-the-whole-series-together" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bringing the Whole Series Together
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="low-latency-engineering-4-putting-it-all-together-a-practical-playbook">Low-Latency Engineering 4: Putting It All Together — A Practical Playbook<a class="headerlink" href="#low-latency-engineering-4-putting-it-all-together-a-practical-playbook" title="Permanent link">&para;</a></h1>
+<p><img alt="myArticle content" src="../images/4.0.png" /></p>
+<p>The first three posts in this series were about <em>understanding</em>: what a mode switch and context switch actually are, what happens step by step inside the kernel during each one, and exactly what causes a page fault. This post flips to <em>doing</em> — the concrete techniques that take a critical task and give it the cleanest, most predictable execution environment possible.</p>
+<p>I'll use the same room analogy from Post 2 to build intuition before getting into the actual mechanisms.</p>
+<hr />
+<h2 id="1-giving-your-critical-task-a-cpu-all-to-itself">1. Giving Your Critical Task a CPU All to Itself<a class="headerlink" href="#1-giving-your-critical-task-a-cpu-all-to-itself" title="Permanent link">&para;</a></h2>
+<h3 id="11-cpu-affinity-you-prefer-this-room">1.1 CPU Affinity: "You Prefer This Room"<a class="headerlink" href="#11-cpu-affinity-you-prefer-this-room" title="Permanent link">&para;</a></h3>
+<p><img alt="Room analogy for CPU affinity" src="../images/4.1.png" /></p>
+<p><strong>CPU affinity</strong> means binding a task to a specific core — in the room analogy, a specific task is told "you always go to Room1" (or Room3, in the diagram). The benefit is written right on the sticky note: <strong>L1/L2/L3 cache and TLB stay "warm"</strong> for that task, because it keeps returning to the exact same physical core instead of bouncing around. Warm cache means fewer cache misses, which means lower average latency.</p>
+<p>But notice what affinity <em>doesn't</em> do: the room isn't locked. Other tasks can still walk in when your task isn't using it. Affinity is a <strong>preference</strong>, not an <strong>exclusion</strong>.</p>
+<h3 id="12-cpu-isolation-this-room-is-locked">1.2 CPU Isolation: "This Room Is Locked"<a class="headerlink" href="#12-cpu-isolation-this-room-is-locked" title="Permanent link">&para;</a></h3>
+<p><img alt="Room analogy for CPU isolation" src="../images/4.2.png" /></p>
+<p><strong>CPU isolation</strong> goes a step further: Room1 now has a lock on it. Ordinary tasks — the general population waiting in the queue for Room2, Room3, or Room4 — are no longer allowed in at all. The payoff, again straight from the diagram: <strong>no interference → lower latency variance (jitter)</strong>. This is the real point of isolation. Affinity gets you a warm cache on average; isolation gets you a <em>predictable</em> execution environment every single time, because nothing else is competing for that core.</p>
+<h3 id="13-why-affinity-isolation-alone-still-isnt-enough">1.3 Why Affinity + Isolation Alone Still Isn't Enough<a class="headerlink" href="#13-why-affinity-isolation-alone-still-isnt-enough" title="Permanent link">&para;</a></h3>
+<p><img alt="The full isolation setup: IRQ affinity, nohz_full, rcu_nocbs, and unbound kworker exclusion" src="../images/4.3.png" /></p>
+<p>Here's the part that's easy to miss: even with a locked room and a task that always goes there, a few uninvited guests can still show up.</p>
+<ul>
+<li><strong>Hardware interrupts</strong> don't care about your lock. Unless you explicitly route them elsewhere (<code>irqaffinity</code>), they can still land on your isolated core.</li>
+<li><strong>The periodic timer tick</strong> fires on every core by default, whether anything useful is happening there or not. <code>nohz_full</code> turns this off for the isolated core specifically.</li>
+<li><strong>RCU callbacks</strong> — a routine kernel bookkeeping mechanism — are normally processed per-core. <code>rcu_nocbs</code> offloads this work to other cores instead.</li>
+<li><strong>Unbound kernel worker threads</strong> (kworkers not tied to a specific core) can still be scheduled onto your isolated core unless you exclude it via <code>workqueue.unbound_cpus</code>.</li>
+</ul>
+<p>There's one category you genuinely can't evict: <strong><code>ksoftirqd</code> and per-CPU-bound kworkers</strong> exist on every core by design and can't be banned outright. But once you've removed the <em>triggers</em> — no interrupts routed there, no RCU work assigned there — they simply have nothing to do and sit idle. You're not banning them; you're starving them of a reason to wake up.</p>
+<p>Put all four settings together — <code>isolcpus</code> + <code>irqaffinity</code> + <code>nohz_full</code> + <code>rcu_nocbs</code> + <code>workqueue.unbound_cpus</code> — and you get about as close to a private, undisturbed CPU as Linux allows.</p>
+<hr />
+<h2 id="2-reducing-context-switches-at-the-source">2. Reducing Context Switches at the Source<a class="headerlink" href="#2-reducing-context-switches-at-the-source" title="Permanent link">&para;</a></h2>
+<h3 id="21-fewer-hardware-interrupts-starting-at-image-build-time">2.1 Fewer Hardware Interrupts, Starting at Image Build Time<a class="headerlink" href="#21-fewer-hardware-interrupts-starting-at-image-build-time" title="Permanent link">&para;</a></h3>
+<p>The cheapest interrupt is one that never exists. When building the OS image itself, stripping out unnecessary drivers and background services removes entire categories of potential interrupt sources before the system ever boots — this is a one-time decision made at image-build time, not something you can bolt on later without rebuilding.</p>
+<h3 id="22-fewer-system-calls">2.2 Fewer System Calls<a class="headerlink" href="#22-fewer-system-calls" title="Permanent link">&para;</a></h3>
+<p><img alt="Three techniques for reducing system calls on the critical path" src="../images/4.8.png" /></p>
+<p>Three techniques, increasing in how aggressively they remove the kernel from the picture:</p>
+<ul>
+<li><strong>Offloading system calls to a dedicated task</strong> — the critical task never calls into the kernel directly for non-essential work. It just drops a request onto a queue; a separate, dedicated I/O worker thread picks it up and deals with the kernel on the critical task's behalf.</li>
+<li><strong>Kernel bypass (direct userspace-hardware access)</strong> — the critical task talks to the NIC directly, skipping the kernel entirely. No syscall, no mode switch, nothing.</li>
+<li><strong>Busy-polling (non-blocking I/O)</strong> — instead of calling into the kernel and getting parked on a wait queue when data isn't ready, the critical task's non-blocking call returns immediately ("not ready"), and the task just loops and checks again — never blocking, never triggering a context switch.</li>
+</ul>
+<h3 id="23-fewer-page-faults">2.3 Fewer Page Faults<a class="headerlink" href="#23-fewer-page-faults" title="Permanent link">&para;</a></h3>
+<p><img alt="Pre-allocated memory, a lock-free ring buffer, and swap disabled entirely" src="../images/4.9.png" /></p>
+<p>This ties straight back to Post 3: <strong>pre-allocate memory up front</strong>, so the minor faults from first-touch allocation all happen during initialization instead of on the hot path. Use a <strong>lock-free ring buffer</strong> over that pre-allocated region so the critical task never calls <code>malloc</code>/<code>free</code> at runtime. Lock the memory into RAM so it can't be paged out. And <strong>disable swap entirely</strong> — with nowhere to swap to, a major page fault on the hot path isn't just unlikely, it's structurally impossible.</p>
+<hr />
+<h2 id="3-rounding-out-the-setup">3. Rounding Out the Setup<a class="headerlink" href="#3-rounding-out-the-setup" title="Permanent link">&para;</a></h2>
+<h3 id="31-huge-pages">3.1 Huge Pages<a class="headerlink" href="#31-huge-pages" title="Permanent link">&para;</a></h3>
+<p><img alt="Fewer TLB entries needed with huge pages vs. regular pages" src="../images/4.10.png" /></p>
+<p>Post 3 covered the four-level page table walk — the expensive path that kicks in on a TLB miss. The fix is right there in the diagram: with regular-sized pages, covering a given range of memory needs many virtual-to-physical mappings (V1 through V8 in the top half), so the TLB can only hold translations for a fraction of them before misses start happening. With <strong>huge pages</strong> (bottom half), the same amount of memory is covered by far fewer, much larger pages (Vh1 through Vh4) — so a much higher share of your working set fits in the TLB at once, and the expensive four-level walk gets triggered far less often.</p>
+<h3 id="32-avoiding-false-sharing">3.2 Avoiding False Sharing<a class="headerlink" href="#32-avoiding-false-sharing" title="Permanent link">&para;</a></h3>
+<p><img alt="False sharing recap: two cores fighting over the same cache line" src="../images/4.6.png" /></p>
+<p>Covered in detail in an earlier post, but worth repeating here as part of the full toolkit: two logically unrelated variables that happen to share a 64-byte cache line will cause two different cores to repeatedly invalidate each other's cached copy — a completely avoidable cost, fixed by padding shared data structures so each hot variable gets its own cache line.</p>
+<h3 id="33-sched_fifo-for-the-tasks-that-dont-get-their-own-core">3.3 SCHED_FIFO for the Tasks That Don't Get Their Own Core<a class="headerlink" href="#33-sched_fifo-for-the-tasks-that-dont-get-their-own-core" title="Permanent link">&para;</a></h3>
+<p><img alt="SCHED_FIFO, SCHED_RR, and SCHED_OTHER scheduling policies" src="../images/4.5.png" /></p>
+<p>You can't give every important task its own isolated core — there aren't enough cores, and most tasks don't need to run continuously anyway. But some of them need to respond <em>instantly</em> the moment they're needed (a risk check, an order cancellation). For those, <strong><code>SCHED_FIFO</code></strong> with a high priority is the answer: once such a task becomes runnable, it preempts anything lower-priority immediately, rather than waiting its turn in the normal fairness-based scheduler.</p>
+<p>The three policies side by side:</p>
+<ul>
+<li><strong><code>SCHED_FIFO</code></strong> — no time slice limit; tasks at the same priority level run strictly in arrival order, to completion.</li>
+<li><strong><code>SCHED_RR</code></strong> — same idea, but with a fixed time slice; once it's used up, the task goes to the back of its priority queue.</li>
+<li><strong><code>SCHED_OTHER</code></strong> (the default, CFS) — no fixed priority levels at all; every task gets a share of the CPU weighted by its nice value (-20 to +19).</li>
+</ul>
+<h3 id="34-one-detail-on-the-kernel-itself-preempt_none">3.4 One Detail on the Kernel Itself: PREEMPT_NONE<a class="headerlink" href="#34-one-detail-on-the-kernel-itself-preempt_none" title="Permanent link">&para;</a></h3>
+<p>Worth mentioning here because it only makes sense in light of everything above: if your critical task is living on a fully isolated core (Section 1.3), building the kernel with the <strong><code>PREEMPT_NONE</code></strong> model is actually the <em>better</em> choice — not the "less advanced" one. The whole point of <code>PREEMPT_VOLUNTARY</code> or full <code>PREEMPT</code> is to let the kernel interrupt itself more eagerly so <em>other</em> tasks get better response times. But on a core where nothing else is supposed to be running in the first place, that extra preemption-checking machinery has nobody to protect — it's pure overhead with no benefit. <code>PREEMPT_NONE</code> skips it entirely.</p>
+<hr />
+<h2 id="bringing-the-whole-series-together">Bringing the Whole Series Together<a class="headerlink" href="#bringing-the-whole-series-together" title="Permanent link">&para;</a></h2>
+<p>Four posts, one continuous thread: <strong>Post 1</strong> gave the vocabulary (mode switch vs. context switch, and what always happens vs. what might happen). <strong>Post 2</strong> opened up the actual kernel mechanics behind a context switch. <strong>Post 3</strong> went deep on page faults specifically, since minor and major faults are worlds apart in cost. And this post turns all of it into an actual checklist — CPU isolation, reduced syscalls, pre-allocated memory, huge pages, false-sharing-safe data structures, and the right scheduling policy for the right task.</p>
+<p>None of these techniques are secret. What changes once you understand the <em>why</em> behind each one is that you stop treating them as a checklist to blindly apply, and start knowing exactly which lever to pull when a latency number doesn't look right.</p>
+<p><em>This is post 4 of the series. Next up: the same toolkit, reorganized around a much more practical question — when do you actually implement each piece, and which file do you touch? From what gets baked into the OS image, to what's set via boot parameters, to what your application code does once at startup versus every cycle of its hot loop.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Celia2024-bit/kernel_learning" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
