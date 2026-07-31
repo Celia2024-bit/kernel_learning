@@ -125,6 +125,4 @@ Once you've seen the five steps broken down like this, the cost of a context swi
 
 And it explains why the advice from Part 1 holds up: minor page faults and simple syscalls skip almost all of this entirely (mode switch only); blocking syscalls, major page faults, and interrupts that flip `TIF_NEED_RESCHED` pay the full price.
 
-
-
 *This is post 2 of the series. Next up: what actually causes a page fault in the first place, and how prefaulting your memory ahead of time (`mlockall` + `memset`) avoids paying for major page faults at all during the critical path.*

@@ -133,6 +133,4 @@ Once the trading application is actually running, these are behavior patterns in
 
 ![5.2.jpg](..\images\5.2.jpg)
 
-
-
 *The core idea hasn't changed: every layer here is trading a controllable resource — extra CPU headroom, extra memory footprint, the cost of a reboot or a redeploy — for deterministic latency. The only thing that's different now is that you know exactly **which file to touch and at which point in time each change takes effect**, instead of treating this as one undifferentiated pile of optimizations.*
