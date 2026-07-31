@@ -1139,6 +1139,20 @@
 <p>Four posts, one continuous thread: <strong>Post 1</strong> gave the vocabulary (mode switch vs. context switch, and what always happens vs. what might happen). <strong>Post 2</strong> opened up the actual kernel mechanics behind a context switch. <strong>Post 3</strong> went deep on page faults specifically, since minor and major faults are worlds apart in cost. And this post turns all of it into an actual checklist — CPU isolation, reduced syscalls, pre-allocated memory, huge pages, false-sharing-safe data structures, and the right scheduling policy for the right task.</p>
 <p>None of these techniques are secret. What changes once you understand the <em>why</em> behind each one is that you stop treating them as a checklist to blindly apply, and start knowing exactly which lever to pull when a latency number doesn't look right.</p>
 <p><em>This is post 4 of the series. Next up: the same toolkit, reorganized around a much more practical question — when do you actually implement each piece, and which file do you touch? From what gets baked into the OS image, to what's set via boot parameters, to what your application code does once at startup versus every cycle of its hot loop.</em></p>
+<ul>
+<li>
+<p><code>#SystemArchitecture</code></p>
+</li>
+<li>
+<p><code>#CpuIsolation</code></p>
+</li>
+<li>
+<p><code>#KernelBypass</code></p>
+</li>
+<li>
+<p><code>#LowLatency</code></p>
+</li>
+</ul>
 
 
 

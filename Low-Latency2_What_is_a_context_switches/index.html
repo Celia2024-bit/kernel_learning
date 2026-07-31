@@ -960,6 +960,20 @@
 </ul>
 <p>And it explains why the advice from Part 1 holds up: minor page faults and simple syscalls skip almost all of this entirely (mode switch only); blocking syscalls, major page faults, and interrupts that flip <code>TIF_NEED_RESCHED</code> pay the full price.</p>
 <p><em>This is post 2 of the series. Next up: what actually causes a page fault in the first place, and how prefaulting your memory ahead of time (<code>mlockall</code> + <code>memset</code>) avoids paying for major page faults at all during the critical path.</em></p>
+<ul>
+<li>
+<p><code>#LinuxKernel</code></p>
+</li>
+<li>
+<p><code>#ThreadScheduling</code></p>
+</li>
+<li>
+<p><code>#PerformanceTuning</code></p>
+</li>
+<li>
+<p><code>#LowLatency</code></p>
+</li>
+</ul>
 
 
 
