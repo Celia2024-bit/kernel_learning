@@ -1,12 +1,14 @@
 # Low-Latency Engineering 5 : A Phase-by-Phase Implementation Checklist
 
+![5.0.png](images\5.0.png)
+
 Post 4 organized the low-latency toolkit by *category*: CPU isolation, reducing context switches, and everything else that rounds out the setup. That's the right way to understand *why* each technique works. But when you actually sit down to implement all of this, a different question matters more: **when do I do this, and which file do I actually touch?**
 
 Some of these changes are baked into the OS image once and never revisited. Some are boot parameters that take effect on every restart. Some are operational configuration applied before the application even starts. Some are one-time setup code that runs when the application initializes. And some are behavior patterns that apply continuously, for as long as the application is running.
 
 Splitting the same toolkit along this axis has a very practical payoff: when something's not working, you know immediately which layer to go debug — the image, the boot parameters, the ops scripts, or the application code itself.
 
-![5.1.jpg](..\images\5.1.jpg)
+![5.1.jpg](images\5.1.jpg)
 
 ---
 
@@ -131,6 +133,6 @@ Once the trading application is actually running, these are behavior patterns in
 
 ## The Full Pipeline, End to End
 
-![5.2.jpg](..\images\5.2.jpg)
+![5.2.jpg](images\5.2.jpg)
 
 *The core idea hasn't changed: every layer here is trading a controllable resource — extra CPU headroom, extra memory footprint, the cost of a reboot or a redeploy — for deterministic latency. The only thing that's different now is that you know exactly **which file to touch and at which point in time each change takes effect**, instead of treating this as one undifferentiated pile of optimizations.*

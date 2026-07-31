@@ -1,6 +1,6 @@
 # Low-Latency Engineering 1: Why I Stopped Memorizing Rules and Started Reading the Kernel
 
-![](../images/1.0.png)
+![](images/1.0.png)
 
 If you've ever researched low-latency systems, you've seen the same checklist everywhere: *reduce context switches, minimize system calls, isolate hardware interrupts, avoid false sharing.* I collected all of these rules a while back. I could recite them. I could apply them.
 
@@ -12,7 +12,7 @@ So I went back to basics and started reading how Linux actually works underneath
 
 Here's the diagram I put together to keep this straight in my head — user space processes/threads on the left, kernel space `task_struct`s (including kernel-native threads) on the right, and the anatomy of `task_struct` itself on the far right:
 
-![usersapcke_kernenl-kernel_userspace_correlation.jpg](../images/1.1.png)
+![usersapcke_kernenl-kernel_userspace_correlation.jpg](images/1.1.png)
 
 ---
 
@@ -22,7 +22,7 @@ Everything we normally write and run — our applications, our shell, our GUI �
 
 ## 2. Process, Thread, and the Kernel's Own View: `task_struct`
 
-![](../images/1.2.png)
+![](images/1.2.png)
 
 In user space, we learned early on that **processes don't share resources**, while **threads within the same process do** (same memory space, same file descriptors, etc.).
 
@@ -78,7 +78,7 @@ With that rule in mind, here's how it plays out for each trigger type:
 
 - **Traps** (like a debugger breakpoint) — same pattern: always a mode switch, and whether a context switch follows depends on what happens next.
 
-![](../images/1.3.png)
+![](images/1.3.png)
 
 The pattern that jumps out: **hardware interrupts and major page faults always cost a full context switch. `getpid()`-style syscalls and minor page faults never do.** `read()` sits in between — it depends entirely on whether the data was already available.
 

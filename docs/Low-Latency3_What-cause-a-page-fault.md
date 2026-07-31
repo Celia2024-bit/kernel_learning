@@ -1,6 +1,6 @@
 # Low-Latency Engineering 3: What Actually Causes a Page Fault?
 
-![myArticle content](../images/3.0.png)
+![myArticle content](images/3.0.png)
 
 Back in Part 1, I mentioned that not all page faults are created equal — a minor page fault is just a mode switch, but a major page fault escalates into a full context switch (the expensive kind, with disk I/O involved). I promised a dedicated post on this, because the distinction matters enormously for real-time systems, and you can't really understand it without first understanding how the kernel finds data in memory in the first place.
 
@@ -12,7 +12,7 @@ So this post starts from the very basics — virtual addresses, physical address
 
 These four terms get used almost interchangeably in casual conversation, but they mean four different things:
 
-![1.1.png](../images/3.1.png)
+![1.1.png](images/3.1.png)
 
 - **Virtual address**: the address your program actually uses. It's not real — it's an abstraction the kernel maintains for every process.
 - **Physical address**: the real location in RAM where data actually lives.
@@ -25,7 +25,7 @@ The diagram above makes the key point visually: **a page's position in virtual m
 
 ## 2. From Virtual Address to Physical Address: The Four-Level Page Table Walk
 
-![1.2.png](../images/3.2.png)
+![1.2.png](images/3.2.png)
 
 On x86-64, a virtual address is split into five pieces: four 9-bit indices and one 12-bit offset. The 12-bit offset is exactly why pages are 4KB (2^12 = 4096) — that's the piece that doesn't need translation at all, since it's just "how far into this page" the byte you want is located.
 
@@ -39,7 +39,7 @@ Combine that physical frame number with the 12-bit offset, and you have the exac
 
 ## 3. The Normal Case: No Page Fault at All
 
-![1.3.png](../images/3.3.png)
+![1.3.png](images/3.3.png)
 
 Walking four levels of page tables for every single memory access would be brutally slow, so the CPU caches recent translations in the **TLB (Translation Lookaside Buffer)**. If the translation for a virtual address is already sitting in the TLB, the CPU skips the four-level walk entirely and jumps straight to the physical frame — that's the fast path. If it's not there (a **TLB miss**), the CPU has to fall back to the full four-level walk described above — slower, but this is still **not a page fault**, because every table and every entry the walk needs actually exists in RAM. The kernel never has to get involved.
 
@@ -55,13 +55,13 @@ A minor page fault means: the data itself is available somewhere in RAM, the ker
 
 ### 4.1 The First Access (Lazy Allocation)
 
-![1.4.png](../images/3.4.png)
+![1.4.png](images/3.4.png)
 
 When you `malloc()` or `mmap()` memory, the kernel doesn't actually hand you physical memory right away — it just reserves a range of virtual addresses. Nothing else exists yet: no page table entry, no TLB entry, no physical frame. This is **lazy allocation**, and it's exactly why "allocating" a huge chunk of memory is nearly instantaneous — the kernel is just promising you the address space, not the actual RAM.
 
 The moment your code actually touches that memory for the first time, this happens:
 
-![1.5.png](../images/3.5.png)
+![1.5.png](images/3.5.png)
 
 1. **Allocate a physical frame** — the kernel finds a free frame in RAM.
 2. **Create the page table entry** — now there's an actual mapping from virtual address to physical frame.
@@ -71,7 +71,7 @@ This is precisely the mechanism behind **prefaulting**, which I mentioned back i
 
 ### 4.2 "The Others": The Frame Already Exists Somewhere
 
-![1.6.png](../images/3.6.png)
+![1.6.png](images/3.6.png)
 
 Sometimes the physical frame already exists in RAM — for example, a shared library page, or a page inherited from a parent process via copy-on-write — but *this specific task* doesn't have its own page table entry pointing to it yet. In that case, the kernel doesn't need to allocate a new frame or touch the disk at all. It just needs to **create the page table entry**, pointing this task at the frame that's already there. This is the cheapest possible fault: one bookkeeping step, done.
 
@@ -81,7 +81,7 @@ Both of these minor fault scenarios only ever escalate to a **mode switch** — 
 
 ## 5. Major Page Fault: When the Kernel Has to Go to Disk
 
-![1.7.png](../images/3.7.png)
+![1.7.png](images/3.7.png)
 
 A major page fault happens when the page genuinely isn't in RAM at all — it has to be fetched from disk (either it was previously swapped out, or it's a file-backed page that was never loaded). The steps:
 
@@ -98,7 +98,7 @@ This is also exactly why the standard low-latency fix is: **prefault your memory
 
 ## 6. One More Wrinkle: Where Is "RAM" Actually Sitting?
 
-![1.8.png](../images/3.8.png)
+![1.8.png](images/3.8.png)
 
 Everything above quietly assumed "RAM" is one uniform pool. On a single-socket server, that's basically true — one memory controller, one pool, done.
 

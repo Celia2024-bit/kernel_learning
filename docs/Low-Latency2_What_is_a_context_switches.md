@@ -1,6 +1,6 @@
 # Low-Latency Engineering 2: What Exactly Happens During a Context Switch?
 
-![](../images/2.0.png)
+![](images/2.0.png)
 
 In the first post of this series, I covered the general picture: a **mode switch** happens whenever the CPU drops into kernel space (hardware interrupt, system call, fault, or trap), and it *may or may not* escalate into a full **context switch** — a different task taking over the CPU.
 
@@ -12,7 +12,7 @@ That was the 30,000-foot view. This post is the zoom-in: **what does the kernel 
 
 Before diving into kernel internals, I built this analogy to keep the mental model straight in my head:
 
-![](../images/2.1.png)
+![](images/2.1.png)
 
 Here's how to read it:
 
@@ -28,19 +28,19 @@ Now watch what happens when **Room1 times out** (the clock runs out — the time
 
 1. **Save the PC state to the USB drive** — the person currently in Room1 gets their "progress" saved onto the USB so nothing is lost.
    
-   ![](../images/2.2.png)
+   ![](images/2.2.png)
 
 2. **Return the person to the queue** — they're pulled out of the room and sent back to the back of the line, since they didn't finish.
    
-   ![myArticle content](../images/2.3.png)
+   ![myArticle content](images/2.3.png)
 
 3. **Choose another person from the queue for Room1** — the scheduler picks whoever's next in line.
    
-   ![myArticle content](../images/2.4.png)
+   ![myArticle content](images/2.4.png)
 
 4. **Restore the PC state and resume work** — the new person sits down, and the room's computer is set up exactly the way *that* person left off last time (or freshly, if it's their first turn).
    
-   ![](../images/2.5.png)
+   ![](images/2.5.png)
 
 That's it. That's a context switch, in plain terms: **save the state of whoever's leaving, pick who's next, restore that new person's state, let them run.**
 
@@ -64,7 +64,7 @@ Now let's look at the three different events that can trigger this sequence — 
 
 ## Trigger 1: A Blocking System Call
 
-![2.6.jpg](..\images\2.6.jpg)
+![2.6.jpg](images\2.6.jpg)
 
 This is the `read()` example from Part 1: thread **C1** calls `read()`, but the I/O isn't ready yet. Since C1 can't make progress, it has no choice but to give up the CPU:
 
@@ -80,7 +80,7 @@ C1 stays parked in the wait queue until whatever it was waiting for (the I/O) be
 
 ## Trigger 2: Page Faults — Why "Minor" and "Major" Are Completely Different Animals
 
-![usersapcke_kernenl-Simplified_content-switches_page_fault.jpg](../images/2.7.jpg)
+![usersapcke_kernenl-Simplified_content-switches_page_fault.jpg](images/2.7.jpg)
 
 This is the distinction from Part 1 that I said deserved its own explanation — and once you see the two side by side, it's obvious why they behave so differently.
 
@@ -99,7 +99,7 @@ Same trigger category (a fault), completely different cost — because the decid
 
 ## Trigger 3: Hardware Interrupts — The One With a Built-In Decision Point
 
-![usersapcke_kernenl-Simplified_content-switches_hardware_interrupt_in_order.jpg](../images/2.8.jpg)
+![usersapcke_kernenl-Simplified_content-switches_hardware_interrupt_in_order.jpg](images/2.8.jpg)
 
 Hardware interrupts are the most interesting case, because they make the "always mode switch, sometimes context switch" rule from Part 1 completely explicit as an actual branch in the code:
 

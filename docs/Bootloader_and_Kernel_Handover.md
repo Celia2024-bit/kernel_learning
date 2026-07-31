@@ -6,7 +6,7 @@ However, I realized that if I didn't get a solid grasp of the actual bootloader 
 
 So, I sat down, used AI to bounce ideas off of, and broke down the exact sequence of how an embedded Linux chip wakes up and hands over control to user space. To keep it straight in my head, I put together this diagram , focusing on separating the **Control Flow** (who is running what) from the **Data Flow** (what file is being moved where).
 
-![myArticle content](../images/bootloader_kernel_handover.png)
+![myArticle content](images/bootloader_kernel_handover.png)
 
 ### Phase 1: Power-On & The SRAM Rescue (Control Flow Starts)
 
@@ -14,18 +14,18 @@ So, I sat down, used AI to bounce ideas off of, and broke down the exact sequenc
 - **Control Flow**: The CPU automatically jumps to a hard-coded internal **ROM** region (address range 0x00000000 - 0x0000FFFF) and executes the native **ROM Code**.
 - **Data Flow**: The ROM Code polls storage devices like SPI Flash, eMMC, or an SD card. Since only the tiny internal **SRAM** is working at this stage, it copies the bootloader's first small component (like the SPL, or Secondary Program Loader) into SRAM to run it. Its main job is to initialize the external DRAM.
 
-### ðŸ§µ Phase 2: DRAM Activation & Loading the Pieces (Control & Data Converge)
+### ?§µ Phase 2: DRAM Activation & Loading the Pieces (Control & Data Converge)
 
 - **Control Flow**: Once the external DRAM (address range 0x80000000 - 0x9FFFFFFF) is up and running, control moves to the full **U-Boot / Bootloader** code.
 - **Data Flow**: U-Boot reads its configuration and scripts, then pulls the core pieces of the OS from the storage medium (address range 0x10000000 - 0x10000FFF) into the DRAM memory.
 - **The Four Components Loaded into RAM**:
 
-### ðŸš€ Phase 3: Handing Over Control to the Kernel
+### ?š€ Phase 3: Handing Over Control to the Kernel
 
 - **Control Flow**: U-Boot finishes its job and jumps directly to the **vmlinuz kernel** in DRAM, passing along the memory address of the Device Tree.
 - **The Kernel's Next Steps**: The kernel wakes up and does a few key things:
 
-### ðŸ’¡ A Few Simple Takeaways
+### ?’¡ A Few Simple Takeaways
 
 Breaking down linux_bootloader.jpg helped me realize something that felt a bit counter-intuitive at first:
 
