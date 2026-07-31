@@ -93,3 +93,13 @@ Once you see it this way, the usual low-latency advice stops being a checklist a
 - "Prefer threads over processes for latency-sensitive work" — because threads in the same process share `mm_struct`, so a context switch between them skips the memory-mapping restore entirely.
 
 *This is post 1 of a series where I'm digging into the "why" behind low-latency Linux engineering, one mechanism at a time.*
+
+
+
+- `#LinuxKernel`
+
+- `#ContextSwitch`
+
+- `#CpuArchitecture`
+
+- `#LowLatency`
