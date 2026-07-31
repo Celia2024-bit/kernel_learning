@@ -57,3 +57,6 @@ git push origin main
   Deploy from a branch
   Branch -> gh-pages    /root  
   ```
+
+
+post docs in https://dev.to/celia2024bit
