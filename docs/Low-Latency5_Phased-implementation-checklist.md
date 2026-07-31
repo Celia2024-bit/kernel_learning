@@ -8,7 +8,7 @@ Some of these changes are baked into the OS image once and never revisited. Some
 
 Splitting the same toolkit along this axis has a very practical payoff: when something's not working, you know immediately which layer to go debug — the image, the boot parameters, the ops scripts, or the application code itself.
 
-![5.1.jpg](images\5.1.jpg)
+![5.1.jpg](images/5.1.jpg)
 
 ---
 
@@ -133,7 +133,7 @@ Once the trading application is actually running, these are behavior patterns in
 
 ## The Full Pipeline, End to End
 
-![5.2.jpg](images\5.2.jpg)
+![5.2.jpg](images/5.2.jpg)
 
 *The core idea hasn't changed: every layer here is trading a controllable resource — extra CPU headroom, extra memory footprint, the cost of a reboot or a redeploy — for deterministic latency. The only thing that's different now is that you know exactly **which file to touch and at which point in time each change takes effect**, instead of treating this as one undifferentiated pile of optimizations.*
 
