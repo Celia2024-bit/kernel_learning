@@ -32,3 +32,28 @@ mkdocs serve -a 127.0.0.1:8080
 ```
 
 https://celia2024-bit.github.io/kernel_learning/
+
+
+
+* create an empty file doc.nojekyll  (keep the same style as the local )
+
+```git
+git add docs/.nojekyll
+git commit -m "fix: add .nojekyll to bypass Jekyll processing"
+git push origin main
+```
+
+- workflow permisson 
+  
+  ```textile
+  Settings-> Actions->General->Workflow permissions->Read and write permissions->save
+  ```
+
+- Delpoy a page 
+  
+  ```context
+  Settings->Pages->Build and deployment->Source 
+  Choose 
+  Deploy from a branch
+  Branch -> gh-pages    /root  
+  ```
