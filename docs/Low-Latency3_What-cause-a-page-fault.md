@@ -1,4 +1,4 @@
-# Low-Latency Engineering: What Actually Causes a Page Fault?
+# Low-Latency Engineering 3: What Actually Causes a Page Fault?
 
 ![myArticle content](../images/3.0.png)
 
@@ -115,7 +115,6 @@ Once you can see the full picture — TLB, four-level page tables, minor faults 
 - "Prefault your memory" — forces every minor fault to happen once, upfront, instead of silently during the hot path.
 - "Disable swap" — removes the possibility of a major fault ever happening at all.
 - "Watch out for NUMA" — because even a resolved fault can leave you with a frame sitting on the wrong node.
+- 
 
 *This is post 3 of the series. Next up: pulling everything together into a practical playbook — how to actually reduce context switches (and even mode switches) on your hot path, plus the other techniques (CPU isolation, IRQ affinity, huge pages, false-sharing-safe data structures, and more) that round out a real low-latency setup.*
-
-Page faults aren't all created equal — a minor one is nearly free, but a major one drags your task through a full context switch and a trip to disk. Part 3 of my low-latency series breaks down virtual memory, page tables, and exactly what the kernel does differently between the two.

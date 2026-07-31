@@ -103,6 +103,4 @@ Four posts, one continuous thread: **Post 1** gave the vocabulary (mode switch v
 
 None of these techniques are secret. What changes once you understand the *why* behind each one is that you stop treating them as a checklist to blindly apply, and start knowing exactly which lever to pull when a latency number doesn't look right.
 
-
-
-Four posts in, and this one closes the loop: from understanding *why* context switches, page faults, and cache contention cost what they cost, to an actual playbook — CPU isolation, kernel bypass, huge pages, and the right scheduling policy for the right task. If you've ever wondered how real-time systems actually get built, this is the checklist.
+*This is post 4 of the series. Next up: the same toolkit, reorganized around a much more practical question — when do you actually implement each piece, and which file do you touch? From what gets baked into the OS image, to what's set via boot parameters, to what your application code does once at startup versus every cycle of its hot loop.*

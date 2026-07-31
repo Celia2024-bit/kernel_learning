@@ -64,7 +64,7 @@ Now let's look at the three different events that can trigger this sequence — 
 
 ## Trigger 1: A Blocking System Call
 
-![usersapcke_kernenl-simplified_content-switches_system_call.jpg](C:\Users\celia.qiang\Downloads\usersapcke_kernenl-simplified_content-switches_system_call.jpg)
+![2.6.jpg](..\images\2.6.jpg)
 
 This is the `read()` example from Part 1: thread **C1** calls `read()`, but the I/O isn't ready yet. Since C1 can't make progress, it has no choice but to give up the CPU:
 
@@ -125,6 +125,6 @@ Once you've seen the five steps broken down like this, the cost of a context swi
 
 And it explains why the advice from Part 1 holds up: minor page faults and simple syscalls skip almost all of this entirely (mode switch only); blocking syscalls, major page faults, and interrupts that flip `TIF_NEED_RESCHED` pay the full price.
 
-*This is post 2 of the series. Next up: what actually causes a page fault in the first place, and how prefaulting your memory ahead of time (`mlockall` + `memset`) avoids paying for major page faults at all during the critical path.*
 
-Ever wondered what actually happens, step by step, when the kernel takes the CPU away from one task and hands it to another? Part 2 of my low-latency series breaks down the context switch mechanism — from a real-world room analogy to the exact kernel steps behind system calls, page faults, and hardware interrupts.
+
+*This is post 2 of the series. Next up: what actually causes a page fault in the first place, and how prefaulting your memory ahead of time (`mlockall` + `memset`) avoids paying for major page faults at all during the critical path.*
