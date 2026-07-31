@@ -947,7 +947,7 @@
 <p>Post 4 organized the low-latency toolkit by <em>category</em>: CPU isolation, reducing context switches, and everything else that rounds out the setup. That's the right way to understand <em>why</em> each technique works. But when you actually sit down to implement all of this, a different question matters more: <strong>when do I do this, and which file do I actually touch?</strong></p>
 <p>Some of these changes are baked into the OS image once and never revisited. Some are boot parameters that take effect on every restart. Some are operational configuration applied before the application even starts. Some are one-time setup code that runs when the application initializes. And some are behavior patterns that apply continuously, for as long as the application is running.</p>
 <p>Splitting the same toolkit along this axis has a very practical payoff: when something's not working, you know immediately which layer to go debug — the image, the boot parameters, the ops scripts, or the application code itself.</p>
-<p><img alt="5.1.jpg" src="images\5.1.jpg" /></p>
+<p><img alt="5.1.jpg" src="../images/5.1.jpg" /></p>
 <hr />
 <h2 id="phase-1-image-build-time">Phase 1: Image Build Time<a class="headerlink" href="#phase-1-image-build-time" title="Permanent link">&para;</a></h2>
 <p>Changes here are <strong>compiled into the image</strong> and won't change again unless you rebuild it.</p>
@@ -1124,7 +1124,7 @@
 </table>
 <hr />
 <h2 id="the-full-pipeline-end-to-end">The Full Pipeline, End to End<a class="headerlink" href="#the-full-pipeline-end-to-end" title="Permanent link">&para;</a></h2>
-<p><img alt="5.2.jpg" src="images\5.2.jpg" /></p>
+<p><img alt="5.2.jpg" src="../images/5.2.jpg" /></p>
 <p><em>The core idea hasn't changed: every layer here is trading a controllable resource — extra CPU headroom, extra memory footprint, the cost of a reboot or a redeploy — for deterministic latency. The only thing that's different now is that you know exactly </em><em>which file to touch and at which point in time each change takes effect</em><em>, instead of treating this as one undifferentiated pile of optimizations.</em></p>
 <ul>
 <li>
